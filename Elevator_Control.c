@@ -18,59 +18,68 @@ const int MoveSpeed = 30;
 const int MoveSpeedDown= 22;
 const int PIDSpeedUp = 25;
 const int PIDSpeedDown = 11;
+//Movement Speeds For Different Controller States
+
 const int Level1Setpoint = -10;
 const int Level2Setpoint = -165;
 const int Level3Setpoint = -347;
+//Encoder Setpoints For Each Target Floor 
+
 const int LEDThresholdFloor1 = -131;
-const int LEDThresholdFloor2 = -131;
 const int LEDThresholdFloor3 = -279.5;
+//Encoder Thresholds That Toggle LEDs On And Off
 
 int TargetPose=0;
-int Startcount =0;
+//Creates Target Setpoint Variable
+int BlinkCount=0;
+//Provides Counting For Blink Animation
+
 task main() {
  startMotor(ElevateMotor,15);
-
- while(Startcount<10){
+//Drives Motor To 0 Position
+ while(BlinkCount<10){
  turnLEDOn(FloorLight1);turnLEDOn(FloorLight2);turnLEDOn(FloorLight3);
  wait(.25);
  turnLEDOff(FloorLight1);turnLEDOff(FloorLight2);turnLEDOff(FloorLight3);
  wait(.25);
- Startcount=Startcount+1;
+ BlinkCount=BlinkCount+1;
 }
+//Blink LEDS While Zeroing Setpoints
  stopMotor(ElevateMotor);
+ //Stops Motor After Reaching 0 Position
  SensorValue(ElevatorEncoder) = 0;
+ //Zeros the Encoder
  TargetPose=Level1Setpoint;
+ //Sets The Target Pose To The First Floor
 	while (true) {
-
-if (SensorValue[ElevatorEncoder] > (TargetPose-3) && (SensorValue[ElevatorEncoder] < (TargetPose+3)))
-				{
+	
+		if (SensorValue[ElevatorEncoder] > (TargetPose-3) && (SensorValue[ElevatorEncoder] < (TargetPose+3))){
 		stopMotor(ElevateMotor);
-
-		}
+		}//If Current Pose Is Within 3 Clicks In Either Direction, Stop The Motor
 
 		if (SensorValue[ElevatorEncoder] < (TargetPose-40)) {
 		startMotor(ElevateMotor, FastMoveDown);
-		}
+		}//If Current Pose Is Farther Than 40 Clicks Up From Target Pose, Run The Motor Down Fast
+
 		if (SensorValue[ElevatorEncoder] > (TargetPose+40)) {
 		startMotor(ElevateMotor, -FastMove);
-		}
-
-
+		}//If Current Pose Is Farther Than 40 Clicks Down From Target Pose, Run The Motor Up Fast
 
 		if (SensorValue[ElevatorEncoder] < (TargetPose-20)) {
 		startMotor(ElevateMotor, MoveSpeedDown);
-		}
+		}//If Current Pose Is Farther Than 20 Clicks Up From Target Pose, Run The Motor Down
+
 		if (SensorValue[ElevatorEncoder] > (TargetPose+20)) {
 		startMotor(ElevateMotor, -MoveSpeed);
-		}
+		}//If Current Pose Is Farther Than 20 Clicks Down From Target Pose, Run The Motor Up
 
 		if (SensorValue[ElevatorEncoder] < (TargetPose-10)) {
 		startMotor(ElevateMotor, PIDSpeedDown);
-		}
+		}//If Current Pose Is Farther Than 10 Clicks Up From Target Pose, Run The Motor Down Slowly
+
 		if (SensorValue[ElevatorEncoder] > (TargetPose+10)) {
 		startMotor(ElevateMotor, -PIDSpeedUp);
-
-}
+		}//If Current Pose Is Farther Than 10 Clicks Down From Target Pose, Run The Motor Up Slowly
 
 
 		if (SensorValue[CallFloor1]==1) {
@@ -81,10 +90,10 @@ if (SensorValue[ElevatorEncoder] > (TargetPose-3) && (SensorValue[ElevatorEncode
 		}
 		if (SensorValue[CallFloor3]==1) {
 		TargetPose = Level3Setpoint;
-	}
+		}
+		//Bind Bump Switches To Set Values For Target Pose
 
-
-			if (SensorValue[SendFloor1]==1) {
+		if (SensorValue[SendFloor1]==1) {
 		TargetPose = Level1Setpoint;
 		}
 		if (SensorValue[SendFloor2]==1) {
@@ -92,28 +101,28 @@ if (SensorValue[ElevatorEncoder] > (TargetPose-3) && (SensorValue[ElevatorEncode
 		}
 		if (SensorValue[SendFloor3]==1) {
 		TargetPose = Level3Setpoint;
-	}
+		}
+		//Bind Limit Switches To Set Values For Target Pose
+		
 		if (SensorValue(ElevatorEncoder)<LEDThresholdFloor1){turnLEDOff(FloorLight1);}
 		if (SensorValue(ElevatorEncoder)>LEDThresholdFloor1){turnLEDOff(FloorLight2);}
 		if (SensorValue(ElevatorEncoder)<LEDThresholdFloor3){turnLEDOff(FloorLight2);}
 		if (SensorValue(ElevatorEncoder)>LEDThresholdFloor3){turnLEDOff(FloorLight3);}
-
+		//Conditions For LEDs To Turn Off
 
 
 		if (SensorValue(ElevatorEncoder)>LEDThresholdFloor1){
 			turnLEDOn(FloorLight1);
-		}
+		}//If Above Threshold For LED1 Turn It On
 
-		if (SensorValue(ElevatorEncoder)
-			<LEDThresholdFloor2 && SensorValue(ElevatorEncoder)>LEDThresholdFloor3){
+		if (SensorValue(ElevatorEncoder)<LEDThresholdFloor1 && SensorValue(ElevatorEncoder)>LEDThresholdFloor3){
 			turnLEDOn(FloorLight2);
-		}
-
-
+		}//If Between Thresholds For Floor 1 And Floor 3 Turn LED2 On
 
 		if (SensorValue(ElevatorEncoder)<LEDThresholdFloor3){
 			turnLEDOn(FloorLight3);
-		}
+		}//If Below Threshold For LED3 Turn It On
+
 
 }
 
